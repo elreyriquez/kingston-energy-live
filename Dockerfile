@@ -15,7 +15,7 @@ COPY artifacts/api-server/package.json  artifacts/api-server/
 COPY artifacts/kingston-energy/package.json artifacts/kingston-energy/
 COPY artifacts/mockup-sandbox/package.json  artifacts/mockup-sandbox/
 COPY scripts/package.json               scripts/
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # ── Build frontend ────────────────────────────────────────────────────────
 FROM deps AS build
