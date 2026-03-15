@@ -22,7 +22,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('ke_auth_token');
     setTokenState(null);
-    window.location.href = '/login';
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+    window.location.href = `${base}/login`;
   };
 
   // Only run query if we have a token

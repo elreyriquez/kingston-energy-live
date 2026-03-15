@@ -21,11 +21,12 @@ export default function Login() {
       {
         onSuccess: (data) => {
           setToken(data.token);
-          // Simple client-side redirect routing based on role
+          // Prepend BASE_URL so routing works under any path prefix
+          const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           setTimeout(() => {
-            if (data.user.role === 'admin' || data.user.role === 'manager') window.location.href = '/dashboard';
-            else if (data.user.role === 'driver') window.location.href = '/driver';
-            else window.location.href = '/resident';
+            if (data.user.role === 'admin' || data.user.role === 'manager') window.location.href = `${base}/dashboard`;
+            else if (data.user.role === 'driver') window.location.href = `${base}/driver`;
+            else window.location.href = `${base}/resident`;
           }, 100);
         },
         onError: (err: any) => {

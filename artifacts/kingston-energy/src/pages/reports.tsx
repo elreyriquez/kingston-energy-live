@@ -4,7 +4,7 @@ import { useGetReports, useCreateReport, useUpdateReport, Report } from '@worksp
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button, Input, Select, Textarea, Label } from '@/components/ui/all';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { FileText, Plus, Check, X } from 'lucide-react';
+import { FileText, Plus, Check, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export default function Reports() {
@@ -13,11 +13,20 @@ export default function Reports() {
   const { data, isLoading } = useGetReports();
   const queryClient = useQueryClient();
   const updateMutation = useUpdateReport();
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   const handleUpdateStatus = (id: string, status: string) => {
+    setResolveError(null);
     updateMutation.mutate(
       { reportId: id, data: { status } },
-      { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/reports'] }) }
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['/api/reports'] });
+        },
+        onError: (err: any) => {
+          setResolveError(err?.message || 'Failed to update report status. Please try again.');
+        }
+      }
     );
   };
 
@@ -45,6 +54,13 @@ export default function Reports() {
             </Button>
           )}
         </div>
+
+        {resolveError && (
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/50 text-destructive text-sm flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {resolveError}
+          </div>
+        )}
 
         {isCreating && user?.role === 'user' && (
           <CreateReportForm onSuccess={() => setIsCreating(false)} />
@@ -85,10 +101,22 @@ export default function Reports() {
                         <td className="px-6 py-4">
                           {r.status === 'pending' && (
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="h-7 text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-emerald-500/30" onClick={() => handleUpdateStatus(r.id.toString(), 'resolved')}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-emerald-500/30"
+                                disabled={updateMutation.isPending}
+                                onClick={() => handleUpdateStatus(r.id.toString(), 'resolved')}
+                              >
                                 <Check className="w-3 h-3 mr-1" /> Resolve
                               </Button>
-                              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => handleUpdateStatus(r.id.toString(), 'dismissed')}>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs"
+                                disabled={updateMutation.isPending}
+                                onClick={() => handleUpdateStatus(r.id.toString(), 'dismissed')}
+                              >
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
@@ -97,7 +125,7 @@ export default function Reports() {
                       )}
                     </tr>
                   ))}
-                  {data?.reports.length === 0 && (
+                  {!isLoading && data?.reports.length === 0 && (
                     <tr><td colSpan={6} className="text-center p-8 text-muted-foreground">No reports found.</td></tr>
                   )}
                 </tbody>
@@ -113,22 +141,36 @@ export default function Reports() {
 function CreateReportForm({ onSuccess }: { onSuccess: () => void }) {
   const createMut = useCreateReport();
   const queryClient = useQueryClient();
+  const [zone, setZone] = useState('Downtown Kingston');
+  const [issueType, setIssueType] = useState('missed-pickup');
+  const [street, setStreet] = useState('');
+  const [desc, setDesc] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    setSubmitError(null);
+
+    if (!street.trim()) {
+      setSubmitError('Please enter a street address.');
+      return;
+    }
+
     createMut.mutate({
       data: {
-        zone_name: fd.get('zone') as string,
-        street: fd.get('street') as string,
-        issue_type: fd.get('type') as string,
+        zone_name: zone,
+        street: street.trim(),
+        issue_type: issueType,
         priority: 'medium',
-        description: fd.get('desc') as string
+        description: desc || undefined
       }
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['/api/reports'] });
         onSuccess();
+      },
+      onError: (err: any) => {
+        setSubmitError(err?.message || 'Failed to submit report. Please try again.');
       }
     });
   };
@@ -140,10 +182,16 @@ function CreateReportForm({ onSuccess }: { onSuccess: () => void }) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {submitError && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/50 text-destructive text-sm flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {submitError}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Zone</Label>
-              <Select name="zone" required>
+              <Select value={zone} onChange={e => setZone(e.target.value)} required>
                 <option value="Downtown Kingston">Downtown Kingston</option>
                 <option value="Half Way Tree">Half Way Tree</option>
                 <option value="Cross Roads">Cross Roads</option>
@@ -152,12 +200,17 @@ function CreateReportForm({ onSuccess }: { onSuccess: () => void }) {
             </div>
             <div className="space-y-2">
               <Label>Street Address</Label>
-              <Input name="street" required placeholder="e.g. 123 Hope Road" />
+              <Input
+                value={street}
+                onChange={e => setStreet(e.target.value)}
+                required
+                placeholder="e.g. 123 Hope Road"
+              />
             </div>
           </div>
           <div className="space-y-2">
             <Label>Issue Type</Label>
-            <Select name="type" required>
+            <Select value={issueType} onChange={e => setIssueType(e.target.value)} required>
               <option value="missed-pickup">Missed Pickup</option>
               <option value="overflowing">Overflowing Bins</option>
               <option value="illegal-dumping">Illegal Dumping</option>
@@ -166,12 +219,16 @@ function CreateReportForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div className="space-y-2">
             <Label>Description (Optional)</Label>
-            <Textarea name="desc" placeholder="Additional details..." />
+            <Textarea
+              value={desc}
+              onChange={e => setDesc(e.target.value)}
+              placeholder="Additional details..."
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" type="button" onClick={onSuccess}>Cancel</Button>
             <Button type="submit" disabled={createMut.isPending}>
-              {createMut.isPending ? "Submitting..." : "Submit Report"}
+              {createMut.isPending ? 'Submitting...' : 'Submit Report'}
             </Button>
           </div>
         </form>
