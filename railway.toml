@@ -1,9 +1,7 @@
 [build]
-builder = "nixpacks"
-buildCommand = "pnpm install && pnpm --filter @workspace/kingston-energy build:prod && pnpm --filter @workspace/api-server build"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "pnpm --filter @workspace/api-server start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
