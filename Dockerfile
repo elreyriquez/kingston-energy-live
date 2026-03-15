@@ -27,11 +27,13 @@ FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy pnpm and node_modules from deps stage
-COPY --from=deps /pnpm /pnpm
+# Install tsx globally so it's always on PATH
+RUN pnpm add -g tsx
+
+# Copy pnpm store and workspace node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/lib/db/node_modules          ./lib/db/node_modules
-COPY --from=deps /app/lib/api-zod/node_modules     ./lib/api-zod/node_modules
+COPY --from=deps /app/lib/db/node_modules              ./lib/db/node_modules
+COPY --from=deps /app/lib/api-zod/node_modules         ./lib/api-zod/node_modules
 COPY --from=deps /app/lib/api-client-react/node_modules ./lib/api-client-react/node_modules
 COPY --from=deps /app/artifacts/api-server/node_modules ./artifacts/api-server/node_modules
 
@@ -44,4 +46,4 @@ COPY artifacts/api-server/ ./artifacts/api-server/
 COPY --from=build /app/artifacts/kingston-energy/dist ./artifacts/kingston-energy/dist
 
 EXPOSE 8080
-CMD ["node_modules/.bin/tsx", "artifacts/api-server/src/index.ts"]
+CMD ["tsx", "artifacts/api-server/src/index.ts"]
