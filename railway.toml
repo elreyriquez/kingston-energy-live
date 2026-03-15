@@ -2,7 +2,6 @@
 builder = "dockerfile"
 
 [deploy]
-healthcheckPath = "/api/healthz"
-healthcheckTimeout = 60
+startCommand = "node artifacts/api-server/dist/index.cjs"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 2
