@@ -7,6 +7,7 @@ import reportsRouter from "./reports.js";
 import scheduleRouter from "./schedule.js";
 import smartbinRouter from "./smartbin.js";
 import statsRouter from "./stats.js";
+import driverRouter from "./driver.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(reportsRouter);
 router.use(scheduleRouter);
 router.use(smartbinRouter);
 router.use(statsRouter);
+router.use(driverRouter);
 
 export default router;
