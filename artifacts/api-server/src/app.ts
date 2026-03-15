@@ -18,7 +18,8 @@ if (process.env.NODE_ENV === "production") {
   const frontendDist = path.join(process.cwd(), "artifacts/kingston-energy/dist");
   if (existsSync(frontendDist)) {
     app.use(express.static(frontendDist));
-    app.get("*", (_req, res) => {
+    // Express 5 requires named wildcards — use regex for SPA fallback
+    app.get(/(.*)/, (_req, res) => {
       res.sendFile(path.join(frontendDist, "index.html"));
     });
   }
