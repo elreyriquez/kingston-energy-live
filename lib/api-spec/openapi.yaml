@@ -1,22 +1,35 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Kingston Energy Waste Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: trucks
+    description: Truck management
+  - name: zones
+    description: Collection zones
+  - name: reports
+    description: Resident reports
+  - name: schedule
+    description: Collection schedule
+  - name: smartbin
+    description: Smart bin monitoring
+  - name: stats
+    description: Statistics and metrics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +37,636 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /trucks:
+    get:
+      operationId: getTrucks
+      tags: [trucks]
+      summary: Get all trucks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of trucks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrucksListResponse"
+    post:
+      operationId: createTruck
+      tags: [trucks]
+      summary: Create a truck (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTruckRequest"
+      responses:
+        "201":
+          description: Truck created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /trucks/{truckId}:
+    patch:
+      operationId: updateTruck
+      tags: [trucks]
+      summary: Update truck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: truckId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTruckRequest"
+      responses:
+        "200":
+          description: Truck updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /zones:
+    get:
+      operationId: getZones
+      tags: [zones]
+      summary: Get all collection zones
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of zones
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZonesListResponse"
+
+  /reports:
+    get:
+      operationId: getReports
+      tags: [reports]
+      summary: Get reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: zone
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportsListResponse"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Submit a report
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportRequest"
+      responses:
+        "201":
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateReportResponse"
+
+  /reports/{reportId}:
+    patch:
+      operationId: updateReport
+      tags: [reports]
+      summary: Update report status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReportRequest"
+      responses:
+        "200":
+          description: Report updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /schedule:
+    get:
+      operationId: getSchedule
+      tags: [schedule]
+      summary: Get collection schedule
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Schedule data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleListResponse"
+    post:
+      operationId: updateSchedule
+      tags: [schedule]
+      summary: Update schedule for a zone
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScheduleRequest"
+      responses:
+        "200":
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /smartbin:
+    get:
+      operationId: getSmartBins
+      tags: [smartbin]
+      summary: Get smart bin data
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Smart bin data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmartBinsResponse"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get system statistics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: System statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+
+  /ai-alerts:
+    get:
+      operationId: getAiAlerts
+      tags: [stats]
+      summary: Get AI alerts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: AI alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAlertsResponse"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, manager, driver, user]
+        name:
+          type: string
+        zone:
+          type: string
+          nullable: true
+      required: [id, username, role, name]
+
+    Truck:
+      type: object
+      properties:
+        id:
+          type: integer
+        truck_id:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        status:
+          type: string
+          enum: [collecting, enroute-to-disposal, disposing, returning, offline]
+        load_kg:
+          type: integer
+        capacity_kg:
+          type: integer
+        collection_zone:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+      required: [id, truck_id, latitude, longitude, status, load_kg, capacity_kg]
+
+    TrucksListResponse:
+      type: object
+      properties:
+        trucks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Truck"
+      required: [trucks]
+
+    CreateTruckRequest:
+      type: object
+      properties:
+        truck_id:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        collection_zone:
+          type: string
+        capacity_kg:
+          type: integer
+      required: [truck_id]
+
+    UpdateTruckRequest:
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+        status:
+          type: string
+        load_kg:
+          type: integer
+        collection_zone:
+          type: string
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        center_lat:
+          type: number
+        center_lng:
+          type: number
+        radius_km:
+          type: number
+      required: [id, name, center_lat, center_lng, radius_km]
+
+    ZonesListResponse:
+      type: object
+      properties:
+        zones:
+          type: array
+          items:
+            $ref: "#/components/schemas/Zone"
+      required: [zones]
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        report_ref:
+          type: string
+        zone_name:
+          type: string
+        street:
+          type: string
+        issue_type:
+          type: string
+        priority:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        submitted_at:
+          type: string
+        updated_at:
+          type: string
+      required: [id, report_ref, zone_name, street, issue_type, priority, status, submitted_at, updated_at]
+
+    ReportsListResponse:
+      type: object
+      properties:
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+      required: [reports]
+
+    CreateReportRequest:
+      type: object
+      properties:
+        zone_name:
+          type: string
+        street:
+          type: string
+        issue_type:
+          type: string
+        priority:
+          type: string
+        description:
+          type: string
+        contact_phone:
+          type: string
+      required: [zone_name, street, issue_type, priority]
+
+    CreateReportResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        report_ref:
+          type: string
+      required: [message, report_ref]
+
+    UpdateReportRequest:
+      type: object
+      properties:
+        status:
+          type: string
+        admin_notes:
+          type: string
+
+    ScheduleEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        zone_name:
+          type: string
+        day_of_week:
+          type: integer
+        start_time:
+          type: string
+        end_time:
+          type: string
+        is_active:
+          type: boolean
+      required: [id, zone_name, day_of_week, start_time, end_time, is_active]
+
+    ScheduleListResponse:
+      type: object
+      properties:
+        schedule:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleEntry"
+      required: [schedule]
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        zone:
+          type: string
+        days:
+          type: array
+          items:
+            type: integer
+        start_time:
+          type: string
+        end_time:
+          type: string
+      required: [zone, days]
+
+    SmartBin:
+      type: object
+      properties:
+        id:
+          type: integer
+        bin_id:
+          type: string
+        location:
+          type: string
+        fill_level:
+          type: integer
+        battery_level:
+          type: integer
+        last_collected:
+          type: string
+          nullable: true
+        status:
+          type: string
+      required: [id, bin_id, location, fill_level, battery_level, status]
+
+    SmartBinsResponse:
+      type: object
+      properties:
+        bins:
+          type: array
+          items:
+            $ref: "#/components/schemas/SmartBin"
+      required: [bins]
+
+    StatsResponse:
+      type: object
+      properties:
+        total_trucks:
+          type: integer
+        active_trucks:
+          type: integer
+        waste_collected_kg:
+          type: integer
+        energy_generated_kwh:
+          type: integer
+        homes_powered:
+          type: integer
+        co2_offset_kg:
+          type: integer
+        total_reports:
+          type: integer
+        pending_reports:
+          type: integer
+      required:
+        - total_trucks
+        - active_trucks
+        - waste_collected_kg
+        - energy_generated_kwh
+        - homes_powered
+        - co2_offset_kg
+        - total_reports
+        - pending_reports
+
+    AiAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        truck_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+      required: [id, type, title, message, priority, created_at]
+
+    AiAlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiAlert"
+      required: [alerts]

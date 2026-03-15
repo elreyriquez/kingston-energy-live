@@ -1,0 +1,19 @@
+packages:
+  "leaflet": "For rendering the interactive map of Kingston"
+  "react-leaflet": "React bindings for Leaflet maps"
+  "@types/leaflet": "Types for Leaflet"
+  "recharts": "For rendering statistics and energy charts"
+  "framer-motion": "For smooth transitions and micro-interactions"
+  "zustand": "For lightweight global UI state management (chat, alerts)"
+  "date-fns": "For formatting dates and times nicely"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+
+images:
+  - path: "artifacts/kingston-energy/public/images/login-bg.png"
+    description: "A dark, cinematic, industrial background of a modern waste-to-energy power plant at night, glowing with subtle neon green and teal lights, highly detailed, photorealistic"
+    aspect_ratio: "16:9"
+
+notes:
+  - "The API token needs to be injected into all requests. I will use a fetch interceptor to automatically add the Authorization: Bearer token to all /api calls since the generated orval hooks use a customFetch base."
+  - "Leaflet CSS must be imported globally."
